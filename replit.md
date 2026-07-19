@@ -1,206 +1,129 @@
-# تطبيق السريع ون - نظام توصيل الطلبات الشامل
+# واصل - Wasel Food Delivery System
 
-## نظرة عامة
+## Project Overview
+A comprehensive food delivery system supporting three user roles: Customers, Drivers, and Administrators. Built as a full-stack TypeScript application with a React frontend and Express backend.
 
-تطبيق السريع ون هو منصة توصيل طلبات شاملة تهدف إلى ربط المطاعم والمتاجر بالعملاء عبر نظام توصيل فعال. يتكون النظام من ثلاث تطبيقات رئيسية تعمل بتناغم لتوفير تجربة متكاملة.
+## Architecture
+- **Frontend**: React 18 + Vite, Tailwind CSS, Radix UI, TanStack Query, Wouter routing
+- **Backend**: Node.js + Express, Drizzle ORM, PostgreSQL, WebSockets (ws), Passport.js auth
+- **Database**: PostgreSQL (Replit managed), Drizzle ORM schema in `/shared/schema.ts`
+- **Package Manager**: npm
+- **Build Tool**: Vite (frontend) + esbuild (backend)
 
-## التطبيقات الثلاثة
+## Project Structure
+- `/client` - React frontend application
+  - `/src/pages` - Pages organized by role: admin, driver, customer
+  - `/src/components` - Reusable UI components (Shadcn UI based)
+  - `/src/context` - React Context providers (Auth, Cart, Location, Theme)
+- `/server` - Express backend
+  - `index.ts` - Entry point
+  - `db.ts` - DatabaseStorage class (Drizzle ORM)
+  - `storage.ts` - IStorage interface + MemStorage fallback
+  - `routes/` - Modular API routes (admin, driver, orders, etc.)
+  - `viteServer.ts` - Vite dev server integration
+  - `seed.ts` - Default data seeding
+- `/shared` - Shared code (Drizzle schema, types)
+- `/drizzle` - Migration files
 
-### 1. تطبيق العملاء (/)
-التطبيق الرئيسي للعملاء النهائيين لطلب الطعام والمنتجات.
+## Driver App Audit Fixes (Session 2)
+- **EnhancedDriverDashboard.tsx**: CRITICAL fix — replaced broken `WS_MANAGER` polling with a dedicated WebSocket connection for the driver app (independent of customer WS). Driver now correctly authenticates and receives real-time notifications
+- **EnhancedDriverDashboard.tsx**: Removed `activeTab` from WebSocket `useEffect` dependency array (was causing WS reconnect on every tab switch). Used `activeTabRef` pattern instead to avoid stale closures
+- **EnhancedDriverDashboard.tsx**: Added `driverWsRef` to share WS reference with geolocation effect (for location update sends)
+- **ProfilePage.tsx**: Now fetches fresh profile data from `/api/drivers/app/dashboard` server endpoint (was only reading stale localStorage data set at login time)
+- **CustomerAuthPage.tsx**: Implemented real Google Sign-In using Google Identity Services (GIS) SDK. When `VITE_GOOGLE_CLIENT_ID` env var is set, renders Google's official button and decodes real JWT to get `sub`, `email`, `name`. Falls back to clear error if unconfigured. Apple login keeps existing flow.
 
-**الصفحات والميزات:**
-- **الصفحة الرئيسية (/)**: عرض المطاعم والتصنيفات مع إمكانية البحث
-- **صفحة المطعم (/restaurant/:id)**: عرض قائمة الطعام والعروض الخاصة
-- **السلة (/cart)**: إدارة الطلبات مع تفاصيل التوصيل وطرق الدفع
-- **الملف الشخصي (/profile)**: إدارة المعلومات الشخصية والإحصائيات
-- **العناوين المحفوظة (/addresses)**: إدارة عناوين التوصيل مع إمكانية الحفظ
-- **تتبع الطلب (/orders/:id)**: متابعة حالة الطلب في الوقت الفعلي
-- **الإعدادات (/settings)**: تخصيص إعدادات التطبيق والإشعارات
-- **سياسة الخصوصية (/privacy)**: معلومات مفصلة حول حماية البيانات
+## Google Sign-In Setup (To Activate)
+1. Create a project in Google Cloud Console and enable "Google Identity" API
+2. Create OAuth 2.0 credentials (Web application type)
+3. Add your Replit app URL to authorized origins
+4. Set `VITE_GOOGLE_CLIENT_ID` environment variable with your client ID
+5. The Google Sign-In button in `/auth` will automatically activate
 
-**المميزات الرئيسية:**
-- واجهة عربية بالكامل مع دعم الكتابة من اليمين إلى اليسار (RTL)
-- نظام سلة تسوق مع حفظ محلي
-- عرض العروض الخاصة والتخفيضات
-- تتبع الطلبات في الوقت الفعلي
-- إدارة متعددة لعناوين التوصيل
-- نظام إشعارات متقدم
-- دعم الوضع الليلي/النهاري
+## Session 3: Guest/Auth Cleanup, Login Fix, HomePage Cache
+- **Login bug fix** (`server/routes/auth.ts`): Login identifier and registration username/phone/email are now trimmed of whitespace and Arabic-Indic digits are converted to Latin. Login matches against both raw and whitespace-stripped forms.
+- **Guest order auto-deletion** (`server/db.ts`): Added `deleteOrderAndAssociated(orderId)` helper. In `completeOrder`, when an order has `customerId IS NULL` (guest), the order, its tracking, ratings, driver reviews/commissions, wallet/loyalty transactions, support tickets, messages, coupon usages, and notifications are deleted ~15 seconds after delivery (giving the UI a moment to show "delivered").
+- **Guest wasalni auto-deletion** (`server/routes/wasalni.ts`): Same immediate-delete behavior applied to wasalni requests when `status='delivered'` and `customerId IS NULL`.
+- **Logged-in tracking deletion warning** (`server/index.ts`): Hourly cleanup now sends a `order_tracking_deletion_warning` notification to logged-in customers (`customerId IS NOT NULL`) ~24h after a terminal order, exactly 1 day before the existing 2-day cleanup deletes the order. Idempotent: skips if a warning was already sent. The warning notification is excluded from the 24h notification cleanup so the customer can see it before the order itself is deleted at +48h.
+- **HomePage data persistence** (`client/src/lib/queryClient.ts`): Bumped `gcTime` from 5min → 1hr so cached query data isn't garbage-collected after the user navigates to Profile/Orders and stays there. Added `placeholderData: (prev) => prev` to keep stale data visible during background refetch (no more empty/flicker when returning to HomePage).
 
-### 2. لوحة التحكم الإدارية (/admin)
-نظام إدارة شامل لأصحاب المطاعم والمديرين.
+## Recent Fixes Applied (Comprehensive Audit)
+- Fixed `eq import` error in `server/index.ts` scheduled orders timer
+- Fixed admin/driver login routing in `AuthContext.tsx` and `LoginPage.tsx`
+- **Cart.tsx**: Fixed post-order redirect from broken `/order-tracking/:id` → correct `/orders/:id`
+- **App.tsx**: Added missing routes: `/favorites` (Favorites), `/wasalni` (WasalniPage), `/category/:name` (CategoryPage)
+- **OrderTracking.tsx**: Added WebSocket auth messages (userId + customerPhone), added auto-reconnect, added working cancel order button via `PATCH /api/orders/:id/cancel`
+- **CustomerAuthPage.tsx**: Fixed social login using wrong localStorage key (`token` → `auth_token`)
+- **auth.ts**: Added `isActive` field to `/api/auth/validate` response; added isActive check to block inactive users
+- **admin.ts**: Added targeted `sendToUser` + `sendToDriver` calls in `PUT /api/admin/orders/:id/status` in addition to broadcast, ensuring customer gets direct WS notification when driver is assigned
+- **NotificationContext.tsx**: Now listens for both `order_update` AND `order_status_changed` WS types; sends auth for both user.id and customer_phone; added Arabic status labels for notifications
+- **socket.ts**: Fixed missing `isAlive` field in client entries on auth
 
-**الوظائف الإدارية:**
-- **إدارة المطاعم**: إضافة وتعديل وحذف المطاعم
-- **إدارة التصنيفات**: تنظيم تصنيفات المطاعم والمنتجات
-- **إدارة المنتجات**: إضافة وتعديل عناصر القوائم
-- **إدارة الطلبات**: متابعة وتحديث حالة الطلبات
-- **إدارة السائقين**: إضافة وإدارة سائقي التوصيل
-- **إدارة العروض**: إنشاء وإدارة العروض الخاصة
-- **التقارير والإحصائيات**: عرض بيانات المبيعات والأداء
+## Key Auth Pattern
+- Customer auth token stored as `auth_token` in localStorage = user UUID
+- Admin: `admin_token`, Driver: `driver_token`
+- Customer phone stored in `customer_phone` localStorage key
+- WS auth sends both userId (UUID) and phone to cover all targeting patterns
 
-**لوحة المعلومات:**
-- إحصائيات يومية للطلبات والإيرادات
-- عدد المطاعم النشطة
-- عدد السائقين المتاحين
-- رسوم بيانية للأداء
+## Driver Earnings Bug Fix (Critical)
+**Bug**: Driver wallet balance was being doubled on order completion (e.g., 3000 earned → 6000 added).
+**Root Cause**: In `server/db.ts` `completeOrder()`, both `updateDriverBalance()` AND `createDriverCommission()` (which internally calls `createDriverTransaction()` which calls `updateDriverBalance()` again) were called for the same amount.
+**Fix Applied**:
+1. `completeOrder()` (db.ts): Removed direct `updateDriverBalance()` call - now only `createDriverCommission()` handles the balance update chain
+2. `add-balance` route (advanced.ts): Removed extra `updateDriverBalance()` call - now only `createDriverTransaction()` updates the balance  
+3. Withdrawal approval route (advanced.ts): Same fix - removed duplicate `updateDriverBalance()` call
 
-### 3. تطبيق السائقين (/delivery)
-تطبيق مخصص لسائقي التوصيل لإدارة المهام.
+## Restaurant Financial Statement
+- **API**: `GET /api/restaurant-accounts/:restaurantId/statement?from=&to=` - returns detailed order-by-order breakdown with commission, net earnings, and withdrawal history
+- **UI Page**: `client/src/pages/admin/RestaurantStatementPage.tsx` - full-featured statement with period filter, summary cards, detailed order table, withdrawal history, print, and PDF download (jsPDF + autoTable)
+- **Navigation**: Added "تقرير PDF" button in `AdminRestaurantAccounts.tsx` next to each restaurant
+- **Route**: `/admin/restaurant-accounts/:restaurantId/statement`
 
-**المميزات للسائقين:**
-- **حالة التوفر**: تفعيل/إلغاء تفعيل استقبال الطلبات
-- **الطلبات المتاحة**: عرض الطلبات الجديدة مع تفاصيل العمولة
-- **الطلبات الحالية**: إدارة الطلبات قيد التوصيل
-- **التنقل المباشر**: ربط مع خرائط جوجل للتوجيه
-- **الاتصال بالعملاء**: إمكانية الاتصال المباشر
-- **تتبع الأرباح**: عرض الأرباح اليومية والشهرية
-- **إحصائيات الأداء**: متوسط الطلبات والتقييمات
+## Real-time Dashboard Updates
+- Admin Dashboard (`AdminDashboard.tsx`): Added WebSocket listener for instant invalidation on order/notification events, reduced polling to 15 seconds
+- Driver Dashboard: Already had WebSocket + added wasalni query invalidation
+- Customer Notifications Panel: Added WebSocket for real-time notification refresh
+- Added GPS location auto-fill (Nominatim reverse geocoding) to WasalniPage steps 1 & 2
+- Added conditional coupon field in CartPage based on `coupon_min_order_value` setting
+- Added `coupon_min_order_value` to seed.ts and AdminUiSettings admin panel
+- Removed hard location requirement from cart checkout button (order can be placed without GPS)
+- Fixed React invalid hook call and setState-in-render warning in App.tsx
 
-## البنية التقنية
+## Development
+- **Dev command**: `npm run dev` (runs Express + Vite middleware on port 5000)
+- **Build command**: `npm run build`
+- **DB push**: `npm run db:push`
 
-### الواجهة الأمامية (Frontend)
-- **إطار العمل**: React 18 مع TypeScript
-- **أداة البناء**: Vite للتطوير السريع
-- **التصميم**: Tailwind CSS مع مكتبة shadcn/ui
-- **إدارة الحالة**: React Context API للسلة والثيم
-- **استعلام البيانات**: TanStack Query (React Query)
-- **التوجيه**: Wouter للتنقل خفيف الوزن
-- **مكونات واجهة المستخدم**: Radix UI مع تخصيصات
+## Key Features
+- Customer app: Browse restaurants/categories, place orders, order tracking
+- Driver app: Manage deliveries, earnings, wallet
+- Admin panel: Orders management, drivers, financial reports, system settings
+- Real-time updates via WebSockets
+- PWA support with service worker
+- Scheduled orders with auto-activation timer
+- Hidden 4-click admin access (tap logo)
+- **AppClosedOverlay**: Interactive popup when store is closed, allows scheduling orders with date/time picker
+- **Wasalni Service (وصل لي)**: Full delivery-from-anywhere service
+  - Customer page: `/wasalni` with from/to address, order type, scheduled time, notes, invoice view
+  - Admin page: `/admin/wasalni` with request management, status updates, fee setting
+  - DB table: `wasalni_requests` (schema in `/shared/schema.ts`)
+  - API: `/api/wasalni` (CRUD in `server/routes/wasalni.ts`)
+  - Toggle: `show_wasalni_service` UI setting in admin panel
+- **Notifications fix**: Customer notifications now correctly fetched from server
+- **Scheduled orders bypass closure**: Scheduled orders allowed even when store is closed
 
-### الواجهة الخلفية (Backend)
-- **إطار العمل**: Express.js مع TypeScript
-- **قاعدة البيانات**: PostgreSQL مع Neon Database
-- **ORM**: Drizzle ORM للعمليات الآمنة
-- **تصميم API**: RESTful endpoints مع رموز HTTP صحيحة
-- **بنية الملفات**: معالجات مسارات منفصلة مع طبقة تخزين
-- **التطوير**: إعادة تحميل ساخنة مع تكامل Vite
+## Environment Variables
+- `DATABASE_URL` - PostgreSQL connection (managed by Replit)
+- `SESSION_SECRET` - Session encryption key (managed by Replit)
+- `NODE_ENV` - Set to "development" for dev mode
 
-### قاعدة البيانات
-**الجداول الرئيسية:**
-- **المستخدمون (users)**: بيانات المستخدمين والمصادقة
-- **عناوين المستخدمين (user_addresses)**: عناوين التوصيل المحفوظة
-- **التصنيفات (categories)**: تصنيفات المطاعم
-- **المطاعم (restaurants)**: معلومات المطاعم والحالة
-- **عناصر القائمة (menu_items)**: المنتجات والأسعار
-- **الطلبات (orders)**: تفاصيل الطلبات وحالة التتبع
-- **السائقون (drivers)**: معلومات سائقي التوصيل
-- **العروض الخاصة (special_offers)**: العروض والتخفيضات
+## Deployment
+- Target: autoscale
+- Build: `npm run build`
+- Run: `node dist/index.js`
 
-## الميزات الرئيسية للنظام
-
-### للعملاء
-1. **تصفح سهل**: واجهة بديهية لتصفح المطاعم والمنتجات
-2. **بحث متقدم**: البحث عن المطاعم والوجبات
-3. **سلة ذكية**: إدارة الطلبات مع حفظ تلقائي
-4. **تتبع مباشر**: متابعة حالة الطلب خطوة بخطوة
-5. **عناوين متعددة**: حفظ وإدارة عناوين التوصيل
-6. **دفع متنوع**: دعم طرق دفع متعددة
-7. **إشعارات فورية**: تحديثات حالة الطلب
-
-### للمطاعم والإدارة
-1. **إدارة شاملة**: تحكم كامل في المطعم والقوائم
-2. **تتبع الطلبات**: إدارة ومتابعة جميع الطلبات
-3. **إحصائيات مفصلة**: تقارير المبيعات والأداء
-4. **إدارة العروض**: إنشاء عروض جذابة
-5. **إدارة السائقين**: تنسيق عمليات التوصيل
-6. **تحديثات فورية**: تحديث حالة الطلبات في الوقت الفعلي
-
-### للسائقين
-1. **إدارة مرنة**: تحكم في حالة التوفر
-2. **اختيار الطلبات**: قبول الطلبات المناسبة
-3. **تنقل محسن**: توجيه GPS مباشر
-4. **تواصل سهل**: اتصال مباشر بالعملاء
-5. **تتبع الأرباح**: مراقبة الدخل والإحصائيات
-6. **واجهة بسيطة**: تصميم مخصص للاستخدام أثناء القيادة
-
-## إعداد وتشغيل النظام
-
-### متطلبات النظام
-- Node.js 20+
-- PostgreSQL database
-- متصفح حديث يدعم ES6+
-
-### خطوات التشغيل
-
-1. **تثبيت التبعيات**:
-```bash
-npm install
-```
-
-2. **إعداد قاعدة البيانات**:
-   - إنشاء قاعدة بيانات PostgreSQL
-   - تحديث متغيرات البيئة
-   - تشغيل migrations
-
-3. **تشغيل التطبيق**:
-```bash
-npm run dev
-```
-
-### الوصول للتطبيقات
-- **تطبيق العملاء**: `http://localhost:5000/`
-- **لوحة التحكم**: `http://localhost:5000/admin`
-- **تطبيق السائقين**: `http://localhost:5000/delivery`
-
-## الأمان والخصوصية
-
-- **تشفير البيانات**: جميع البيانات الحساسة مشفرة
-- **مصادقة آمنة**: نظام مصادقة قوي للمستخدمين
-- **حماية API**: تحقق من الصلاحيات لجميع العمليات
-- **خصوصية البيانات**: امتثال لمعايير حماية البيانات
-- **نسخ احتياطي**: نسخ احتياطي منتظم لقاعدة البيانات
-
-## التحديثات الأخيرة
-
-### إصلاحات حرجة في إدارة الوجبات (AdminMenuItems) - سبتمبر 2025
-
-**المشاكل التي تم إصلاحها:**
-1. **خطأ في validation البيانات**: حل مشكلة parseFloat() التي تُرجع NaN عند إرسال قيم فارغة
-2. **معالجة أخطاء محسنة**: إضافة رسائل خطأ واضحة ومفهومة للمستخدمين
-3. **تحويل البيانات الآمن**: تحسين تحويل البيانات الرقمية من/إلى string و decimal
-4. **validation شامل**: إضافة تحقق كامل من الحقول المطلوبة قبل إرسال البيانات
-
-**التحسينات التقنية:**
-- تحقق من وجود القيم المطلوبة (name, price, image, category, restaurantId)
-- validation رقمي آمن للأسعار مع منع القيم السالبة أو الصفر
-- تحويل صحيح للبيانات الرقمية في handleEdit function
-- رسائل خطأ مفصلة وواضحة بالعربية
-- معالجة صحيحة للـ originalPrice الاختياري
-
-**تأثير الإصلاحات:**
-- منع أخطاء إضافة/تعديل الوجبات في لوحة التحكم
-- تحسين تجربة المستخدم مع رسائل خطأ واضحة
-- ضمان سلامة البيانات في قاعدة البيانات
-- عدم إرسال قيم NaN التي تسبب فشل validation في الخادم
-
-## التحديثات المستقبلية
-
-- **دفع إلكتروني**: ربط مع بوابات دفع محلية ودولية
-- **إشعارات الدفع**: رسائل SMS وإشعارات فورية
-- **تطبيق موبايل**: نسخ Android و iOS
-- **ذكاء اصطناعي**: توصيات شخصية للعملاء
-- **تحليلات متقدمة**: رؤى أعمق لسلوك العملاء
-
-## الدعم والصيانة
-
-- **مراقبة 24/7**: مراقبة مستمرة لأداء النظام
-- **تحديثات أمنية**: تحديثات دورية للحماية
-- **دعم فني**: فريق دعم متخصص
-- **تدريب المستخدمين**: دورات تدريبية للمطاعم والسائقين
-
-## معلومات الاتصال
-
-- **الموقع الإلكتروني**: [alsarie-one.com]
-- **البريد الإلكتروني**: support@alsarie-one.com
-- **الهاتف**: +967-1-234567
-- **العنوان**: صنعاء، اليمن
-
-## الخلاصة
-
-تطبيق السريع ون يوفر حلاً متكاملاً لصناعة توصيل الطعام في اليمن، مع التركيز على الجودة والسرعة وسهولة الاستخدام. النظام مصمم ليكون قابلاً للتوسع ويدعم النمو المستقبلي للأعمال.
-
----
-
-*تم تطوير هذا النظام باستخدام أحدث التقنيات لضمان الأداء الأمثل والأمان الكامل.*
+## Latest Session Fixes (April 2026)
+- **Targeted notifications (server/socket.ts)**: New `notifyOrder(type, payload, recipients)` helper sends WebSocket events only to the specific customer (by id and phone), assigned driver, admin dashboard, and active order trackers. Replaced all global `ws.broadcast('order_update', ...)` calls in `server/routes/orders.ts`, `server/routes/wasalni.ts`, `server/routes/driver.ts`, and one in `server/routes/admin.ts` with `ws.notifyOrder(...)` so each customer only receives their own order updates.
+- **TopBar working hours indicator**: Replaced the "deliver to current location" mobile button with a `WorkingHoursIndicator` (`client/src/components/TopBar.tsx`) that reads `store_status`, `opening_time`, `closing_time` from `useUiSettings`, computes open/closed automatically (supports midnight crossover), and shows time in 12-hour format with Arabic ص/م suffix. Auto-refreshes every minute.
+- **AdminOffers.tsx**: Converted misused `useState(() => {...})` to `useEffect`. Added `onError` toasts and proper `response.ok` checks to all three mutations (create / update / delete). Switched `validUntil` to ISO string for safer JSON serialization. Verified end-to-end with `POST /api/admin/special-offers` returning 201 with auto-linked "العروض" category.
+- **Admin sidebar cleanup (AdminLayout.tsx)**: Removed three menu items whose routes had no page (would render NotFound): "تقارير المتاجر" (`/admin/restaurant-reports`), "التقارير التفصيلية" (`/admin/detailed-reports`), "التقارير المتقدمة" (`/admin/advanced-reports`).
+- **Google Sign-In secret**: Requested `VITE_GOOGLE_CLIENT_ID` from the user (the GIS button code in `CustomerAuthPage.tsx` was already complete from a previous session and activates as soon as the env var is set).
