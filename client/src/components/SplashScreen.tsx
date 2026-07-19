@@ -4,7 +4,6 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Loader2 } from 'lucide-react';
 import { prefetchBootstrap } from '@/lib/bootstrap';
-import waselLogo from '@assets/wasel-logo.png';
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -80,7 +79,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
     );
   }
 
-  const logoUrl = getSetting('logo_url') || waselLogo;
+  const logoUrl = getSetting('logo_url') || '';
   const splashTitle = getSetting('splash_title') || 'واصل';
   const splashSubtitle = getSetting('splash_subtitle') || 'نوصل لك بكل سرعة وأمان';
   const buttonText = getSetting('splash_button_text') || 'ابدأ الآن';

@@ -16,7 +16,6 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useUiSettings } from '@/context/UiSettingsContext';
 import { CustomerNotificationsPanel } from './CustomerNotificationsPanel';
-import waselLogo from '@assets/wasel-logo.png';
 
 // شريط حالة عمل التطبيق (مفتوح/مغلق + ساعات العمل) - استبدل زر الموقع
 const WorkingHoursIndicator: React.FC = () => {
@@ -120,7 +119,7 @@ export const TopBar: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const logoUrl = getSetting('header_logo_url') || getSetting('logo_url') || waselLogo;
+  const logoUrl = getSetting('header_logo_url') || getSetting('logo_url') || '';
   const appName = getSetting('app_name') || 'واصل';
 
   const handleSearch = (e: React.FormEvent) => {
@@ -165,12 +164,12 @@ export const TopBar: React.FC = () => {
             data-testid="link-home-logo"
           >
             <div className="relative">
-              <div className="absolute inset-0 bg-[#F5A623] rounded-full blur-xl opacity-25 group-hover:opacity-40 transition-opacity" />
+              <div className="absolute inset-0 bg-[#FF4500] rounded-full blur-xl opacity-25 group-hover:opacity-40 transition-opacity" />
               <img src={logoUrl} alt={appName} className="relative h-14 w-auto object-contain transition-transform group-hover:scale-105 drop-shadow-[0_0_15px_rgba(245,166,35,0.45)]" />
             </div>
             <div className="flex flex-col leading-none">
               <span className="text-2xl font-black text-white tracking-tight">{appName}</span>
-              <span className="text-[10px] font-bold text-[#F5A623] tracking-[0.3em] mt-1">WASEL</span>
+              <span className="text-[10px] font-bold text-[#FF4500] tracking-[0.3em] mt-1">السريع ون</span>
             </div>
           </div>
 
@@ -223,7 +222,7 @@ export const TopBar: React.FC = () => {
       {/* Mobile Header - Modern glass design with navy gradient + amber accents */}
       <div className="md:hidden relative bg-gradient-to-br from-[#0E1729] via-[#152033] to-[#0B1220] shadow-xl overflow-hidden">
         {/* Decorative glow blobs */}
-        <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-[#F5A623] opacity-20 blur-3xl pointer-events-none" />
+        <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-[#FF4500] opacity-20 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 w-44 h-44 rounded-full bg-[#FFC061] opacity-10 blur-3xl pointer-events-none" />
 
         <div className="relative px-3 py-2.5 flex items-center justify-between gap-2">
@@ -248,12 +247,12 @@ export const TopBar: React.FC = () => {
           >
             <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
               <div className="relative">
-                <div className="absolute inset-0 bg-[#F5A623] rounded-full blur-md opacity-50" />
+                <div className="absolute inset-0 bg-[#FF4500] rounded-full blur-md opacity-50" />
                 <img src={logoUrl} alt={appName} className="relative h-8 w-8 object-contain drop-shadow-[0_0_8px_rgba(245,166,35,0.5)]" />
               </div>
               <div className="flex flex-col leading-none">
                 <span className="text-white font-black text-base">{appName}</span>
-                <span className="text-[8px] font-bold text-[#F5A623] tracking-[0.25em] mt-0.5">WASEL</span>
+                <span className="text-[8px] font-bold text-[#FF4500] tracking-[0.25em] mt-0.5">السريع ون</span>
               </div>
             </div>
           </div>
@@ -274,7 +273,7 @@ export const TopBar: React.FC = () => {
             >
               <ShoppingCart className="h-5 w-5" />
               {getItemCount() > 0 && (
-                <span className="absolute top-0.5 right-0.5 bg-[#F5A623] text-[#0E1729] text-[9px] rounded-full h-4 min-w-4 px-1 flex items-center justify-center font-black ring-2 ring-[#0E1729] shadow-lg">
+                <span className="absolute top-0.5 right-0.5 bg-[#FF4500] text-[#0E1729] text-[9px] rounded-full h-4 min-w-4 px-1 flex items-center justify-center font-black ring-2 ring-[#0E1729] shadow-lg">
                   {getItemCount()}
                 </span>
               )}
@@ -291,12 +290,12 @@ export const TopBar: React.FC = () => {
             <form onSubmit={handleSearch} className="relative">
               <input
                 autoFocus
-                className="w-full bg-white/95 text-slate-900 placeholder-slate-400 border border-white/30 rounded-2xl px-4 py-2.5 pr-11 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#F5A623] shadow-lg"
+                className="w-full bg-white/95 text-slate-900 placeholder-slate-400 border border-white/30 rounded-2xl px-4 py-2.5 pr-11 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#FF4500] shadow-lg"
                 placeholder="ابحث عن مطعم أو طبق..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#F5A623] text-white flex items-center justify-center shadow-md">
+              <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#FF4500] text-white flex items-center justify-center shadow-md">
                 <Search className="h-4 w-4" />
               </button>
             </form>

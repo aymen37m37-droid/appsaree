@@ -135,7 +135,7 @@ export default function Layout({ children }: LayoutProps) {
           {/* Hero header: dark navy with logo + profile card */}
           <div className="relative bg-gradient-to-br from-[#0E1729] via-[#152033] to-[#0B1220] px-5 pt-7 pb-14 overflow-hidden">
             {/* Decorative blobs */}
-            <div className="absolute -top-12 -right-8 w-44 h-44 rounded-full bg-[#F5A623] opacity-25 blur-3xl pointer-events-none" />
+            <div className="absolute -top-12 -right-8 w-44 h-44 rounded-full bg-[#FF4500] opacity-25 blur-3xl pointer-events-none" />
             <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-[#FFC061] opacity-15 blur-3xl pointer-events-none" />
 
             <button
@@ -149,7 +149,7 @@ export default function Layout({ children }: LayoutProps) {
             {/* Logo + brand */}
             <div className="relative flex items-center justify-center gap-3 mb-5">
               <div className="relative">
-                <div className="absolute inset-0 bg-[#F5A623] rounded-full blur-xl opacity-40" />
+                <div className="absolute inset-0 bg-[#FF4500] rounded-full blur-xl opacity-40" />
                 {sidebarLogoUrl ? (
                   <img src={sidebarLogoUrl} alt={appName} className="relative h-16 w-16 object-contain drop-shadow-[0_0_15px_rgba(245,166,35,0.5)]" />
                 ) : (
@@ -160,7 +160,7 @@ export default function Layout({ children }: LayoutProps) {
               </div>
               <div className="flex flex-col leading-none">
                 <span className="text-3xl font-black text-white tracking-tight">{appName}</span>
-                <span className="text-[10px] font-bold text-[#F5A623] tracking-[0.35em] mt-1">WASEL</span>
+                <span className="text-[10px] font-bold text-[#FF4500] tracking-[0.35em] mt-1">السريع ون</span>
               </div>
             </div>
 
@@ -176,7 +176,7 @@ export default function Layout({ children }: LayoutProps) {
               className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white border border-slate-100 shadow-[0_10px_30px_-12px_rgba(14,23,41,0.25)] hover:shadow-[0_15px_35px_-10px_rgba(245,166,35,0.35)] transition-all"
               data-testid="button-profile-card"
             >
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#F5A623] to-[#FFC061] flex items-center justify-center text-white font-black text-lg shadow-md flex-shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF4500] to-[#FFC061] flex items-center justify-center text-white font-black text-lg shadow-md flex-shrink-0">
                 {user ? (user.name?.charAt(0) || user.phone?.charAt(0) || 'و') : <User className="h-6 w-6" />}
               </div>
               <div className="flex-1 text-right min-w-0">
@@ -206,14 +206,14 @@ export default function Layout({ children }: LayoutProps) {
                     onClick={() => navigate(item.path)}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 ${
                       isActive
-                        ? 'bg-gradient-to-l from-[#F5A623]/15 to-transparent ring-1 ring-[#F5A623]/30'
+                        ? 'bg-gradient-to-l from-[#FF4500]/15 to-transparent ring-1 ring-[#FF4500]/30'
                         : 'hover:bg-slate-50'
                     }`}
                     data-testid={`link-sidebar-${item.path.replace('/', '')}`}
                   >
                     <div className={`w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 transition-colors ${
                       isActive
-                        ? 'bg-gradient-to-br from-[#F5A623] to-[#FFC061] text-white shadow-md'
+                        ? 'bg-gradient-to-br from-[#FF4500] to-[#FFC061] text-white shadow-md'
                         : 'bg-slate-100 text-slate-600'
                     }`}>
                       <Icon className="h-4.5 w-4.5" />
@@ -222,7 +222,7 @@ export default function Layout({ children }: LayoutProps) {
                       {item.label}
                     </span>
                     {isActive && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500]" />
                     )}
                   </button>
                 );
@@ -248,7 +248,7 @@ export default function Layout({ children }: LayoutProps) {
               <span className="text-sm font-bold flex-1 text-right text-slate-700">
                 {language === 'ar' ? 'English' : 'العربية'}
               </span>
-              <span className="text-[10px] font-black bg-[#F5A623]/15 text-[#F5A623] px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-black bg-[#FF4500]/15 text-[#FF4500] px-2 py-0.5 rounded-full">
                 {language === 'ar' ? 'EN' : 'AR'}
               </span>
             </button>
@@ -260,7 +260,7 @@ export default function Layout({ children }: LayoutProps) {
               {showShareButton && (
                 <button
                   onClick={handleShare}
-                  className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white border border-slate-200 hover:border-[#F5A623]/40 hover:bg-[#F5A623]/5 shadow-sm transition-all"
+                  className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white border border-slate-200 hover:border-[#FF4500]/40 hover:bg-[#FF4500]/5 shadow-sm transition-all"
                   data-testid="button-share"
                 >
                   <Share2 className="h-4.5 w-4.5 text-slate-600" />
@@ -269,7 +269,7 @@ export default function Layout({ children }: LayoutProps) {
               {showContactButton && (
                 <button
                   onClick={() => window.open(whatsappLink, '_blank')}
-                  className="flex-1 max-w-[180px] h-11 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#F5A623] to-[#FFC061] text-white font-black text-sm shadow-md hover:shadow-lg transition-all"
+                  className="flex-1 max-w-[180px] h-11 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#FF4500] to-[#FFC061] text-white font-black text-sm shadow-md hover:shadow-lg transition-all"
                   data-testid="button-contact-support"
                 >
                   <MessageCircle className="h-4 w-4" />
